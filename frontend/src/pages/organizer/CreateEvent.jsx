@@ -105,7 +105,7 @@ export default function CreateEvent() {
             {/* Progress */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
                 {[1, 2, 3].map((s) => (
-                    <div key={s} style={{ flex: 1, height: 4, borderRadius: 2, background: s <= step ? 'var(--accent-primary)' : 'var(--border-glass)', transition: 'background 0.3s' }} />
+                    <div key={s} style={{ flex: 1, height: 4, borderRadius: 2, background: s <= step ? 'var(--accent)' : 'var(--border)', transition: 'background 0.3s' }} />
                 ))}
             </div>
 

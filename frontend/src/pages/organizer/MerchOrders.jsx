@@ -66,20 +66,20 @@ export default function MerchOrders() {
 
             {/* Stats */}
             <div className="grid-4" style={{ marginBottom: '2rem' }}>
-                <div className="stat-card" onClick={() => setFilter('all')} style={{ cursor: 'pointer', border: filter === 'all' ? '1px solid var(--accent-primary)' : 'none' }}>
+                <div className="stat-card" onClick={() => setFilter('all')} style={{ cursor: 'pointer', border: filter === 'all' ? '1px solid var(--accent)' : 'none' }}>
                     <span className="stat-value">{stats.total}</span>
                     <span className="stat-label">Total Orders</span>
                 </div>
-                <div className="stat-card" onClick={() => setFilter('pending_approval')} style={{ cursor: 'pointer', border: filter === 'pending_approval' ? '1px solid #eab308' : 'none' }}>
-                    <span className="stat-value" style={{ color: '#eab308' }}>{stats.pending}</span>
+                <div className="stat-card" onClick={() => setFilter('pending_approval')} style={{ cursor: 'pointer', border: filter === 'pending_approval' ? '1px solid #999' : 'none' }}>
+                    <span className="stat-value" style={{ color: '#999' }}>{stats.pending}</span>
                     <span className="stat-label">Pending</span>
                 </div>
-                <div className="stat-card" onClick={() => setFilter('approved')} style={{ cursor: 'pointer', border: filter === 'approved' ? '1px solid #22c55e' : 'none' }}>
-                    <span className="stat-value" style={{ color: '#22c55e' }}>{stats.approved}</span>
+                <div className="stat-card" onClick={() => setFilter('approved')} style={{ cursor: 'pointer', border: filter === 'approved' ? '1px solid #aaa' : 'none' }}>
+                    <span className="stat-value" style={{ color: '#ccc' }}>{stats.approved}</span>
                     <span className="stat-label">Approved</span>
                 </div>
-                <div className="stat-card" onClick={() => setFilter('rejected')} style={{ cursor: 'pointer', border: filter === 'rejected' ? '1px solid #ef4444' : 'none' }}>
-                    <span className="stat-value" style={{ color: '#ef4444' }}>{stats.rejected}</span>
+                <div className="stat-card" onClick={() => setFilter('rejected')} style={{ cursor: 'pointer', border: filter === 'rejected' ? '1px solid #666' : 'none' }}>
+                    <span className="stat-value" style={{ color: '#888' }}>{stats.rejected}</span>
                     <span className="stat-label">Rejected</span>
                 </div>
             </div>
@@ -103,8 +103,8 @@ export default function MerchOrders() {
                                     </p>
                                 </div>
                                 <span className={`badge ${order.paymentStatus === 'approved' ? 'badge-success' :
-                                        order.paymentStatus === 'rejected' ? 'badge-danger' :
-                                            'badge-warning'
+                                    order.paymentStatus === 'rejected' ? 'badge-danger' :
+                                        'badge-warning'
                                     }`}>
                                     {order.paymentStatus}
                                 </span>
@@ -134,7 +134,7 @@ export default function MerchOrders() {
 
                             {/* Ticket info if approved */}
                             {order.ticketId && (
-                                <div style={{ padding: '0.5rem', background: 'rgba(34,197,94,0.1)', borderRadius: '8px', marginBottom: '1rem' }}>
+                                <div style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '0.85rem' }}>🎫 Ticket: <strong>{order.ticketId}</strong></span>
                                 </div>
                             )}

@@ -105,12 +105,12 @@ export default function TeamChat({ teamId }) {
                             <div style={{
                                 padding: '0.6rem 1rem',
                                 borderRadius: isMe ? '12px 12px 0 12px' : '12px 12px 12px 0',
-                                background: isMe ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)',
+                                background: isMe ? '#444' : 'rgba(255,255,255,0.08)',
                                 color: 'white',
                             }}>
                                 {!isMe && <div style={{ fontSize: '0.75rem', fontWeight: 'bold', opacity: 0.8, marginBottom: '2px' }}>{msg.senderName}</div>}
                                 {msg.messageType === 'file' ? (
-                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: isMe ? 'white' : 'var(--accent-primary)', textDecoration: 'underline' }}>
+                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ccc', textDecoration: 'underline' }}>
                                         📎 {msg.fileName || 'File'}
                                     </a>
                                 ) : (

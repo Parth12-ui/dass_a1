@@ -55,7 +55,7 @@ export default function Register() {
         <div className="auth-container">
             <div className="auth-card glass-card" style={{ maxWidth: 520 }}>
                 <h1>Create Account</h1>
-                <p className="subtitle">Join the fest platform as a participant</p>
+                <p className="subtitle">Join Felicity as a participant</p>
 
                 {error && <div className="alert alert-error">{error}</div>}
 
@@ -80,12 +80,12 @@ export default function Register() {
                     </div>
 
                     <div className="form-group">
-                        <label>Email {form.participantType === 'iiit' && <span style={{ color: 'var(--accent-secondary)', fontSize: 'var(--font-xs)' }}>(@iiit.ac.in required)</span>}</label>
+                        <label>Email {form.participantType === 'iiit' && <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-xs)' }}>(@iiit.ac.in required)</span>}</label>
                         <input name="email" type="email" className="form-input" placeholder={form.participantType === 'iiit' ? 'you@iiit.ac.in' : 'you@example.com'} value={form.email} onChange={handleChange} required />
                     </div>
 
                     <div className="form-group">
-                        <label>College / Organization {form.participantType === 'iiit' && <span style={{ color: 'var(--accent-secondary)', fontSize: 'var(--font-xs)' }}>(auto-set)</span>}</label>
+                        <label>College / Organization {form.participantType === 'iiit' && <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-xs)' }}>(auto-set)</span>}</label>
                         <input name="collegeName" className="form-input" placeholder="Your college or org" value={form.participantType === 'iiit' ? 'IIIT Hyderabad' : form.collegeName} onChange={handleChange} disabled={form.participantType === 'iiit'} />
                     </div>
 

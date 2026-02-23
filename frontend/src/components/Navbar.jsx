@@ -38,7 +38,7 @@ export default function Navbar() {
     return (
         <nav className="navbar">
             <div className="navbar-inner">
-                <span className="navbar-brand">🎉 FestPlatform</span>
+                <span className="navbar-brand">Felicity</span>
                 <div className="navbar-links">
                     {links.map((link) => (
                         <NavLink key={link.path} to={link.path}>

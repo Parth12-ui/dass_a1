@@ -45,7 +45,7 @@ export default function EventCard({ event, linkPrefix = '/browse' }) {
             </div>
 
             {event.registrationFee > 0 && (
-                <div style={{ marginTop: '0.5rem', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--accent-secondary)' }}>
+                <div style={{ marginTop: '0.5rem', fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     ₹{event.registrationFee}
                 </div>
             )}

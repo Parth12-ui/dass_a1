@@ -46,7 +46,7 @@ app.use('/api/feedback', feedbackRoutes);
 
 // Health check
 app.get('/', (req, res) => {
-  res.json({ message: 'Fest Platform API is running' });
+  res.json({ message: 'Felicity API is running' });
 });
 
 // --------------- Database & Server ---------------

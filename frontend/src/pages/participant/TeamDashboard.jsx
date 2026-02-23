@@ -36,7 +36,7 @@ export default function TeamDashboard() {
                             style={{ cursor: 'pointer' }}
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <h3 style={{ margin: 0, color: 'var(--accent-primary)' }}>{team.name}</h3>
+                                <h3 style={{ margin: 0, color: 'var(--accent)' }}>{team.name}</h3>
                                 <span className={`badge ${team.status === 'complete' ? 'badge-success' : team.status === 'forming' ? 'badge-warning' : 'badge-danger'}`}>
                                     {team.status}
                                 </span>
@@ -50,9 +50,9 @@ export default function TeamDashboard() {
                             <p style={{ opacity: 0.5, fontSize: '0.85rem', marginTop: '0.5rem' }}>
                                 Leader: {team.leader?.firstName} {team.leader?.lastName}
                             </p>
-                            <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(139,92,246,0.1)', borderRadius: '8px', textAlign: 'center' }}>
+                            <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', textAlign: 'center' }}>
                                 <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Invite Code:</span>
-                                <span style={{ fontFamily: 'monospace', fontWeight: 'bold', marginLeft: '0.5rem', color: 'var(--accent-primary)' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 'bold', marginLeft: '0.5rem', color: 'var(--accent)' }}>
                                     {team.inviteCode}
                                 </span>
                             </div>

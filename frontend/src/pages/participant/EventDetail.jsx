@@ -137,10 +137,10 @@ export default function EventDetail() {
                             <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ marginBottom: '1rem' }}>Select Items</h3>
                                 {event.merchandiseItems.map((item) => (
-                                    <div key={item._id} style={{ padding: '1rem 0', borderBottom: '1px solid var(--border-glass)' }}>
+                                    <div key={item._id} style={{ padding: '1rem 0', borderBottom: '1px solid var(--border)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <strong>{item.name}</strong>
-                                            <span style={{ color: 'var(--accent-secondary)' }}>₹{item.price}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>₹{item.price}</span>
                                         </div>
                                         <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', margin: '0.25rem 0' }}>
                                             Stock: {item.stockQuantity} | Limit: {item.purchaseLimitPerParticipant}/person

@@ -30,7 +30,7 @@ export default function EventFeedback() {
             <div className="glass-card" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
+                        <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--accent)' }}>
                             {stats.avgRating}
                         </div>
                         <div style={{ fontSize: '1.5rem' }}>
@@ -48,7 +48,7 @@ export default function EventFeedback() {
                                 >
                                     <span style={{ width: '2rem', textAlign: 'right', fontSize: '0.85rem' }}>{star}★</span>
                                     <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                                        <div style={{ width: `${pct}%`, height: '100%', background: star >= 4 ? '#22c55e' : star === 3 ? '#eab308' : '#ef4444', borderRadius: '4px', transition: 'width 0.3s' }} />
+                                        <div style={{ width: `${pct}%`, height: '100%', background: star >= 4 ? '#ccc' : star === 3 ? '#999' : '#888', borderRadius: '4px', transition: 'width 0.3s' }} />
                                     </div>
                                     <span style={{ width: '2rem', fontSize: '0.85rem', opacity: 0.6 }}>{count}</span>
                                 </div>
@@ -68,7 +68,7 @@ export default function EventFeedback() {
                     feedbacks.map((fb, i) => (
                         <div key={i} className="glass-card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                <span style={{ color: '#eab308' }}>
+                                <span style={{ color: '#999' }}>
                                     {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
                                 </span>
                                 <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>

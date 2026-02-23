@@ -72,8 +72,8 @@ export default function TeamDetail() {
                 {/* Invite & Actions */}
                 <div className="glass-card">
                     <h3>🔗 Invite Code</h3>
-                    <div style={{ margin: '1.5rem 0', padding: '1.5rem', background: 'rgba(139,92,246,0.15)', borderRadius: '12px', textAlign: 'center' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: '2rem', fontWeight: 'bold', color: 'var(--accent-primary)', letterSpacing: '4px' }}>
+                    <div style={{ margin: '1.5rem 0', padding: '1.5rem', background: 'rgba(255,255,255,0.06)', borderRadius: '12px', textAlign: 'center' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '2rem', fontWeight: 'bold', color: 'var(--accent)', letterSpacing: '4px' }}>
                             {team.inviteCode}
                         </span>
                     </div>

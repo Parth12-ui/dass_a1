@@ -112,22 +112,22 @@ export default function Forum({ eventId, isOrganizer = false }) {
             style={{
                 padding: '1rem',
                 background: msg.isPinned
-                    ? 'rgba(234,179,8,0.1)'
+                    ? 'rgba(255,255,255,0.08)'
                     : msg.isAnnouncement
-                        ? 'rgba(139,92,246,0.15)'
+                        ? 'rgba(255,255,255,0.12)'
                         : 'rgba(255,255,255,0.03)',
                 borderRadius: '8px',
                 borderLeft: msg.isAnnouncement
-                    ? '3px solid var(--accent-primary)'
+                    ? '3px solid var(--accent)'
                     : msg.isPinned
-                        ? '3px solid #eab308'
+                        ? '3px solid #999'
                         : '3px solid transparent',
                 marginLeft: isReply ? '2rem' : 0,
             }}
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <strong style={{ color: msg.authorRole === 'organizer' ? 'var(--accent-primary)' : 'inherit' }}>
+                    <strong style={{ color: msg.authorRole === 'organizer' ? 'var(--accent)' : 'inherit' }}>
                         {msg.authorName}
                     </strong>
                     {msg.authorRole === 'organizer' && <span className="badge badge-accent" style={{ fontSize: '0.7rem' }}>Organizer</span>}
@@ -179,17 +179,17 @@ export default function Forum({ eventId, isOrganizer = false }) {
                 {!isReply && (
                     <button
                         onClick={() => setReplyTo(msg._id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--accent-primary)' }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--accent)' }}
                     >
                         ↩ Reply
                     </button>
                 )}
                 {isOrganizer && (
                     <>
-                        <button onClick={() => pinMessage(msg._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#eab308' }}>
+                        <button onClick={() => pinMessage(msg._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#999' }}>
                             {msg.isPinned ? 'Unpin' : '📌 Pin'}
                         </button>
-                        <button onClick={() => deleteMessage(msg._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#ef4444' }}>
+                        <button onClick={() => deleteMessage(msg._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#888' }}>
                             🗑 Delete
                         </button>
                     </>
@@ -207,7 +207,7 @@ export default function Forum({ eventId, isOrganizer = false }) {
                 {replyTo && (
                     <div style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
                         <span>Replying to message...</span>
-                        <button type="button" onClick={() => setReplyTo(null)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>✕ Cancel</button>
+                        <button type="button" onClick={() => setReplyTo(null)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>✕ Cancel</button>
                     </div>
                 )}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
