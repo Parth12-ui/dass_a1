@@ -112,11 +112,23 @@ const browseEvents = async (req, res) => {
             endDate,
             followedOnly,
             trending,
+            status = 'upcoming',
             page = 1,
             limit = 20,
         } = req.query;
 
-        const query = { status: { $in: ['published', 'ongoing'] } };
+        const query = {};
+
+        // Status filter
+        if (status === 'upcoming') {
+            query.status = { $in: ['published', 'ongoing'] };
+        } else if (status === 'completed') {
+            query.status = 'completed';
+        } else if (status === 'all') {
+            query.status = { $in: ['published', 'ongoing', 'completed'] };
+        } else {
+            query.status = { $in: ['published', 'ongoing'] }; // default
+        }
 
         // Text search (partial / fuzzy via regex)
         if (search) {

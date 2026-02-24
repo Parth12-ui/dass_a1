@@ -8,7 +8,7 @@ export default function BrowseEvents() {
     const [trending, setTrending] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [filters, setFilters] = useState({ type: '', eligibility: '', startDate: '', endDate: '', followedOnly: false });
+    const [filters, setFilters] = useState({ type: '', eligibility: '', status: 'upcoming', startDate: '', endDate: '', followedOnly: false });
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({});
 
@@ -18,6 +18,7 @@ export default function BrowseEvents() {
             const params = { page, limit: 12, search };
             if (filters.type) params.type = filters.type;
             if (filters.eligibility) params.eligibility = filters.eligibility;
+            if (filters.status) params.status = filters.status;
             if (filters.startDate) params.startDate = filters.startDate;
             if (filters.endDate) params.endDate = filters.endDate;
             if (filters.followedOnly) params.followedOnly = 'true';
@@ -81,6 +82,11 @@ export default function BrowseEvents() {
                     <option value="all">Open to All</option>
                     <option value="iiit">IIIT Only</option>
                     <option value="non-iiit">Non-IIIT Only</option>
+                </select>
+                <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
+                    <option value="upcoming">Upcoming/Ongoing</option>
+                    <option value="completed">Completed</option>
+                    <option value="all">All Statuses</option>
                 </select>
                 <input type="date" value={filters.startDate} onChange={(e) => setFilters({ ...filters, startDate: e.target.value })} />
                 <input type="date" value={filters.endDate} onChange={(e) => setFilters({ ...filters, endDate: e.target.value })} />
