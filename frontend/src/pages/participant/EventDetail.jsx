@@ -279,53 +279,119 @@ export default function EventDetail() {
                         {/* Merchandise Items */}
                         {event.type === 'merchandise' && event.merchandiseItems?.length > 0 && !isRegistered && (
                             <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ marginBottom: '1rem' }}>Select Items</h3>
-                                {event.merchandiseItems.map((item) => (
-                                    <div key={item._id} style={{ padding: '1rem 0', borderBottom: '1px solid var(--border)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <strong>{item.name}</strong>
-                                            <span style={{ color: 'var(--text-secondary)' }}>₹{item.price}</span>
-                                        </div>
-                                        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', margin: '0.25rem 0' }}>
-                                            Stock: {item.stockQuantity} | Limit: {item.purchaseLimitPerParticipant}/person
-                                        </div>
-                                        {item.stockQuantity > 0 ? (
-                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                                                {item.sizes?.length > 0 && (
-                                                    <select className="form-input" style={{ width: 'auto' }}
-                                                        onChange={(e) => {
-                                                            const idx = merchSelections.findIndex((s) => s.itemId === item._id);
-                                                            const sel = { itemId: item._id, size: e.target.value, quantity: 1 };
-                                                            if (idx > -1) { const ns = [...merchSelections]; ns[idx] = { ...ns[idx], ...sel }; setMerchSelections(ns); }
-                                                            else setMerchSelections([...merchSelections, sel]);
-                                                        }}>
-                                                        <option value="">Size</option>
-                                                        {item.sizes.map((s) => <option key={s} value={s}>{s}</option>)}
-                                                    </select>
-                                                )}
-                                                {item.colors?.length > 0 && (
-                                                    <select className="form-input" style={{ width: 'auto' }}
-                                                        onChange={(e) => {
-                                                            const idx = merchSelections.findIndex((s) => s.itemId === item._id);
-                                                            if (idx > -1) { const ns = [...merchSelections]; ns[idx].color = e.target.value; setMerchSelections(ns); }
-                                                        }}>
-                                                        <option value="">Color</option>
-                                                        {item.colors.map((c) => <option key={c} value={c}>{c}</option>)}
-                                                    </select>
-                                                )}
-                                                <button className="btn btn-primary btn-sm"
-                                                    onClick={() => {
-                                                        const exists = merchSelections.find((s) => s.itemId === item._id);
-                                                        if (!exists) setMerchSelections([...merchSelections, { itemId: item._id, quantity: 1 }]);
-                                                    }}>
-                                                    + Add
-                                                </button>
+                                <h3 style={{ marginBottom: '1rem' }}>🛍️ Select Items</h3>
+                                {event.merchandiseItems.map((item) => {
+                                    const inCart = merchSelections.find((s) => s.itemId === item._id);
+                                    return (
+                                        <div key={item._id} style={{ padding: '1rem 0', borderBottom: '1px solid var(--border)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <strong>{item.name}</strong>
+                                                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>₹{item.price}</span>
                                             </div>
-                                        ) : (
-                                            <span className="badge badge-red" style={{ marginTop: '0.5rem' }}>Out of Stock</span>
-                                        )}
+                                            <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', margin: '0.25rem 0' }}>
+                                                Stock: {item.stockQuantity} | Limit: {item.purchaseLimitPerParticipant}/person
+                                            </div>
+                                            {item.stockQuantity > 0 ? (
+                                                inCart ? (
+                                                    /* Already added — show quantity controls and options */
+                                                    <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--accent)' }}>
+                                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                            {item.sizes?.length > 0 && (
+                                                                <select className="form-input" style={{ width: 'auto', minWidth: '80px' }}
+                                                                    value={inCart.size || ''}
+                                                                    onChange={(e) => {
+                                                                        setMerchSelections(merchSelections.map((s) =>
+                                                                            s.itemId === item._id ? { ...s, size: e.target.value } : s
+                                                                        ));
+                                                                    }}>
+                                                                    <option value="">Size</option>
+                                                                    {item.sizes.map((s) => <option key={s} value={s}>{s}</option>)}
+                                                                </select>
+                                                            )}
+                                                            {item.colors?.length > 0 && (
+                                                                <select className="form-input" style={{ width: 'auto', minWidth: '80px' }}
+                                                                    value={inCart.color || ''}
+                                                                    onChange={(e) => {
+                                                                        setMerchSelections(merchSelections.map((s) =>
+                                                                            s.itemId === item._id ? { ...s, color: e.target.value } : s
+                                                                        ));
+                                                                    }}>
+                                                                    <option value="">Color</option>
+                                                                    {item.colors.map((c) => <option key={c} value={c}>{c}</option>)}
+                                                                </select>
+                                                            )}
+                                                            {item.variants?.length > 0 && (
+                                                                <select className="form-input" style={{ width: 'auto', minWidth: '80px' }}
+                                                                    value={inCart.variant || ''}
+                                                                    onChange={(e) => {
+                                                                        setMerchSelections(merchSelections.map((s) =>
+                                                                            s.itemId === item._id ? { ...s, variant: e.target.value } : s
+                                                                        ));
+                                                                    }}>
+                                                                    <option value="">Variant</option>
+                                                                    {item.variants.map((v) => <option key={v} value={v}>{v}</option>)}
+                                                                </select>
+                                                            )}
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <button className="btn btn-secondary btn-sm" style={{ padding: '0.2rem 0.6rem', minWidth: 'auto' }}
+                                                                    onClick={() => {
+                                                                        if (inCart.quantity > 1) {
+                                                                            setMerchSelections(merchSelections.map((s) =>
+                                                                                s.itemId === item._id ? { ...s, quantity: s.quantity - 1 } : s
+                                                                            ));
+                                                                        }
+                                                                    }}>−</button>
+                                                                <span style={{ fontWeight: 600, minWidth: '20px', textAlign: 'center' }}>{inCart.quantity}</span>
+                                                                <button className="btn btn-secondary btn-sm" style={{ padding: '0.2rem 0.6rem', minWidth: 'auto' }}
+                                                                    onClick={() => {
+                                                                        if (inCart.quantity < item.purchaseLimitPerParticipant) {
+                                                                            setMerchSelections(merchSelections.map((s) =>
+                                                                                s.itemId === item._id ? { ...s, quantity: s.quantity + 1 } : s
+                                                                            ));
+                                                                        }
+                                                                    }}>+</button>
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
+                                                                    ₹{item.price * inCart.quantity}
+                                                                </span>
+                                                                <button className="btn btn-danger btn-sm" style={{ padding: '0.2rem 0.5rem', minWidth: 'auto' }}
+                                                                    onClick={() => setMerchSelections(merchSelections.filter((s) => s.itemId !== item._id))}>
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    /* Not added yet — show Add button */
+                                                    <button className="btn btn-primary btn-sm" style={{ marginTop: '0.5rem' }}
+                                                        onClick={() => setMerchSelections([...merchSelections, { itemId: item._id, quantity: 1 }])}>
+                                                        + Add to Cart
+                                                    </button>
+                                                )
+                                            ) : (
+                                                <span className="badge badge-red" style={{ marginTop: '0.5rem' }}>Out of Stock</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Cart summary */}
+                                {merchSelections.length > 0 && (
+                                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.06)', borderRadius: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontWeight: 600 }}>🛒 Cart ({merchSelections.length} item{merchSelections.length > 1 ? 's' : ''})</span>
+                                            <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 'var(--font-lg)' }}>
+                                                ₹{merchSelections.reduce((sum, s) => {
+                                                    const item = event.merchandiseItems.find((i) => i._id === s.itemId);
+                                                    return sum + (item ? item.price * s.quantity : 0);
+                                                }, 0)}
+                                            </span>
+                                        </div>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
 
