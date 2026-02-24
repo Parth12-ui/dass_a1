@@ -26,6 +26,7 @@ export default function EventDetail() {
     const [feedbackComment, setFeedbackComment] = useState('');
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
     const [feedbackLoading, setFeedbackLoading] = useState(false);
+    const [feedbackAnonymous, setFeedbackAnonymous] = useState(true);
 
     // Payment proof state
     const [paymentFile, setPaymentFile] = useState(null);
@@ -158,7 +159,7 @@ export default function EventDetail() {
         }
         setFeedbackLoading(true);
         try {
-            await API.post(`/feedback/${id}`, { rating: feedbackRating, comment: feedbackComment });
+            await API.post(`/feedback/${id}`, { rating: feedbackRating, comment: feedbackComment, isAnonymous: feedbackAnonymous });
             setFeedbackSubmitted(true);
             setMessage({ type: 'success', text: 'Thank you for your feedback!' });
         } catch (err) {
@@ -480,7 +481,7 @@ export default function EventDetail() {
                         )}
 
                         {/* Feedback Section (when event is completed) */}
-                        {isRegistered && event.status === 'completed' && (
+                        {isRegistered && (event.status === 'completed' || event.status === 'ongoing') && (
                             <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ marginBottom: '0.75rem' }}>⭐ Event Feedback</h3>
                                 {feedbackSubmitted ? (
@@ -515,9 +516,14 @@ export default function EventDetail() {
                                                 value={feedbackComment} onChange={(e) => setFeedbackComment(e.target.value)}
                                                 rows={3} />
                                         </div>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginBottom: '0.75rem', cursor: 'pointer' }}>
+                                            <input type="checkbox" checked={feedbackAnonymous} onChange={(e) => setFeedbackAnonymous(e.target.checked)}
+                                                style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }} />
+                                            Submit anonymously
+                                        </label>
                                         <button className="btn btn-primary" style={{ width: '100%' }}
                                             onClick={handleFeedbackSubmit} disabled={feedbackLoading || feedbackRating === 0}>
-                                            {feedbackLoading ? 'Submitting...' : 'Submit Feedback'}
+                                            {feedbackLoading ? 'Submitting...' : feedbackAnonymous ? '🔒 Submit Anonymously' : '📝 Submit Feedback'}
                                         </button>
                                     </>
                                 )}

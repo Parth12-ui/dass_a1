@@ -68,9 +68,16 @@ export default function EventFeedback() {
                     feedbacks.map((fb, i) => (
                         <div key={i} className="glass-card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                <span style={{ color: '#999' }}>
-                                    {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <span style={{ color: '#999' }}>
+                                        {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
+                                    </span>
+                                    <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                                        {fb.isAnonymous || !fb.participant
+                                            ? '🔒 Anonymous'
+                                            : `${fb.participant.firstName} ${fb.participant.lastName}`}
+                                    </span>
+                                </div>
                                 <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>
                                     {new Date(fb.createdAt).toLocaleDateString()}
                                 </span>

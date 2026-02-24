@@ -9,7 +9,7 @@ const Event = require('../models/Event');
 const submitFeedback = async (req, res) => {
     try {
         const { eventId } = req.params;
-        const { rating, comment } = req.body;
+        const { rating, comment, isAnonymous } = req.body;
 
         if (!rating || rating < 1 || rating > 5) {
             return res.status(400).json({ message: 'Rating must be between 1 and 5' });
@@ -18,8 +18,8 @@ const submitFeedback = async (req, res) => {
         // Verify event is completed
         const event = await Event.findById(eventId);
         if (!event) return res.status(404).json({ message: 'Event not found' });
-        if (event.status !== 'completed') {
-            return res.status(400).json({ message: 'Feedback can only be submitted for completed events' });
+        if (event.status !== 'completed' && event.status !== 'ongoing') {
+            return res.status(400).json({ message: 'Feedback can only be submitted for ongoing or completed events' });
         }
 
         // Verify user was registered
@@ -39,11 +39,12 @@ const submitFeedback = async (req, res) => {
             participant: req.user.id,
             rating: Math.round(rating),
             comment: comment || '',
+            isAnonymous: isAnonymous !== false, // default to anonymous
         });
 
         await feedback.save();
 
-        res.status(201).json({ message: 'Feedback submitted anonymously!', feedback: { rating: feedback.rating } });
+        res.status(201).json({ message: isAnonymous !== false ? 'Feedback submitted anonymously!' : 'Feedback submitted!', feedback: { rating: feedback.rating } });
     } catch (err) {
         console.error('Submit feedback error:', err);
         res.status(500).json({ message: 'Server error' });
@@ -63,9 +64,20 @@ const getEventFeedback = async (req, res) => {
         if (minRating) filter.rating = { $gte: parseInt(minRating) };
 
         const feedbacks = await Feedback.find(filter)
-            .select('rating comment createdAt -_id') // anonymous: no participant info
+            .populate('participant', 'firstName lastName')
             .sort({ createdAt: -1 })
             .lean();
+
+        // Strip participant info for anonymous feedbacks
+        const sanitizedFeedbacks = feedbacks.map((fb) => ({
+            rating: fb.rating,
+            comment: fb.comment,
+            createdAt: fb.createdAt,
+            isAnonymous: fb.isAnonymous !== false,
+            participant: fb.isAnonymous === false && fb.participant
+                ? { firstName: fb.participant.firstName, lastName: fb.participant.lastName }
+                : null,
+        }));
 
         // Aggregate stats
         const allFeedbacks = await Feedback.find({ event: eventId }).lean();
@@ -79,7 +91,7 @@ const getEventFeedback = async (req, res) => {
         allFeedbacks.forEach((f) => { breakdown[f.rating]++; });
 
         res.json({
-            feedbacks,
+            feedbacks: sanitizedFeedbacks,
             stats: { totalCount, avgRating: parseFloat(avgRating), breakdown },
         });
     } catch (err) {
