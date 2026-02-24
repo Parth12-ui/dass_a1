@@ -26,7 +26,8 @@ const createTeam = async (req, res) => {
 
         // Eligibility check
         const user = await User.findById(req.user.id);
-        if (event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+        const eligibility = event.eligibility || 'all';
+        if (eligibility !== 'all' && eligibility !== user.participantType) {
             return res.status(403).json({ message: 'You are not eligible for this event' });
         }
 
@@ -98,7 +99,8 @@ const joinTeam = async (req, res) => {
         // Eligibility check
         const event = await Event.findById(team.event);
         const user = await User.findById(req.user.id);
-        if (event && event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+        const eligibility = event?.eligibility || 'all';
+        if (eligibility !== 'all' && eligibility !== user.participantType) {
             return res.status(403).json({ message: 'You are not eligible for this event' });
         }
 

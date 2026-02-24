@@ -205,11 +205,13 @@ const getEventDetail = async (req, res) => {
         const existingReg = await Registration.findOne({
             event: event._id,
             participant: req.user.id,
+            status: { $nin: ['cancelled', 'rejected'] },
         });
 
-        // Check eligibility
+        // Check eligibility (treat missing/empty eligibility as 'all')
         const user = await User.findById(req.user.id);
-        const isEligible = event.eligibility === 'all' || event.eligibility === user.participantType;
+        const eligibility = event.eligibility || 'all';
+        const isEligible = eligibility === 'all' || eligibility === user.participantType;
 
         res.json({
             event,
@@ -248,7 +250,7 @@ const registerForEvent = async (req, res) => {
 
         // Eligibility check
         const user = await User.findById(req.user.id);
-        if (event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+        if ((event.eligibility || 'all') !== 'all' && event.eligibility !== user.participantType) {
             return res.status(403).json({ message: 'You are not eligible for this event' });
         }
 
@@ -330,7 +332,7 @@ const purchaseMerchandise = async (req, res) => {
 
         // Eligibility check
         const user = await User.findById(req.user.id);
-        if (event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+        if ((event.eligibility || 'all') !== 'all' && event.eligibility !== user.participantType) {
             return res.status(403).json({ message: 'You are not eligible for this event' });
         }
 
