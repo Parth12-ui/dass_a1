@@ -3,15 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import Loading from '../../components/Loading';
 import TeamChat from '../../components/TeamChat';
+import { useAuth } from '../../context/AuthContext';
 
 export default function TeamDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [team, setTeam] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showChat, setShowChat] = useState(false);
     const [leaving, setLeaving] = useState(false);
+    const [closing, setClosing] = useState(false);
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
         api.get(`/teams/${id}`)
@@ -32,6 +36,36 @@ export default function TeamDetail() {
         setLeaving(false);
     };
 
+    const handleClose = async () => {
+        if (!confirm('Close this team? Tickets will be generated for all current members and no new members can join.')) return;
+        setClosing(true);
+        setError('');
+        setSuccessMsg('');
+        try {
+            const res = await api.post(`/teams/${id}/close`);
+            setTeam(res.data.team);
+            setSuccessMsg(res.data.message);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to close team');
+        }
+        setClosing(false);
+    };
+
+    const handleReopen = async () => {
+        if (!confirm('Reopen this team? New members will be able to join again.')) return;
+        setClosing(true);
+        setError('');
+        setSuccessMsg('');
+        try {
+            const res = await api.post(`/teams/${id}/reopen`);
+            setTeam(res.data.team);
+            setSuccessMsg(res.data.message);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to reopen team');
+        }
+        setClosing(false);
+    };
+
     if (loading) return <Loading />;
     if (error && !team) return <div className="page-container"><div className="alert alert-error">{error}</div></div>;
     if (!team) return null;
@@ -43,12 +77,13 @@ export default function TeamDetail() {
                     <h1 className="page-title" style={{ marginBottom: 0 }}>{team.name}</h1>
                     <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>{team.event?.name}</p>
                 </div>
-                <span className={`badge ${team.status === 'complete' ? 'badge-success' : team.status === 'forming' ? 'badge-warning' : 'badge-danger'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
+                <span className={`badge ${team.status === 'complete' ? 'badge-success' : team.status === 'forming' ? 'badge-warning' : team.status === 'closed' ? 'badge-accent' : 'badge-danger'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
                     {team.status}
                 </span>
             </div>
 
             {error && <div className="alert alert-error">{error}</div>}
+            {successMsg && <div className="alert alert-success">{successMsg}</div>}
 
             <div className="grid-2">
                 {/* Members */}
@@ -81,14 +116,32 @@ export default function TeamDetail() {
                         Share this code with teammates to join your team
                     </p>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                        <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setShowChat(!showChat)}>
-                            {showChat ? '📋 Hide Chat' : '💬 Team Chat'}
-                        </button>
-                        {team.status === 'forming' && (
-                            <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleLeave} disabled={leaving}>
-                                {leaving ? 'Leaving...' : '🚪 Leave Team'}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setShowChat(!showChat)}>
+                                {showChat ? '📋 Hide Chat' : '💬 Team Chat'}
                             </button>
+                            {(team.status === 'forming' || team.status === 'closed') && (
+                                <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleLeave} disabled={leaving}>
+                                    {leaving ? 'Leaving...' : '🚪 Leave Team'}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Close / Reopen (leader only) */}
+                        {user?.id === team.leader?._id && (
+                            <>
+                                {team.status === 'forming' && (
+                                    <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handleClose} disabled={closing}>
+                                        {closing ? 'Closing...' : '🔒 Close Team (Generate Tickets)'}
+                                    </button>
+                                )}
+                                {team.status === 'closed' && (
+                                    <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handleReopen} disabled={closing}>
+                                        {closing ? 'Reopening...' : '🔓 Reopen Team'}
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

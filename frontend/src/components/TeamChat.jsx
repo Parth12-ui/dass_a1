@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api/axios';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
@@ -12,41 +12,74 @@ export default function TeamChat({ teamId }) {
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
-    useEffect(() => {
+    // Shared fetch function used on mount, reconnect, and polling
+    const fetchMessages = useCallback(() => {
         api.get(`/chat/${teamId}/messages`)
-            .then((r) => setMessages(r.data.messages))
+            .then((r) => {
+                setMessages((prev) => {
+                    const fetched = r.data.messages || [];
+                    if (prev.length === 0) return fetched;
+                    // Merge: keep existing + add any new ones from server
+                    const existingIds = new Set(prev.map((m) => m._id));
+                    const newMsgs = fetched.filter((m) => !existingIds.has(m._id));
+                    return newMsgs.length > 0 ? [...prev, ...newMsgs] : prev;
+                });
+            })
             .catch(console.error);
     }, [teamId]);
 
+    // Initial fetch
+    useEffect(() => {
+        fetchMessages();
+    }, [fetchMessages]);
+
+    // Socket events + reconnect handler
     useEffect(() => {
         if (!socket) return;
 
         socket.emit('teamchat:join', teamId);
 
-        socket.on('teamchat:message', (msg) => {
-            setMessages((prev) => [...prev, msg]);
-        });
+        const handleMessage = (msg) => {
+            setMessages((prev) => {
+                if (prev.some((m) => m._id === msg._id)) return prev;
+                return [...prev, msg];
+            });
+        };
 
-        socket.on('teamchat:typing', ({ userId, userName, isTyping }) => {
+        // On reconnect, re-join room and re-fetch missed messages
+        const handleReconnect = () => {
+            socket.emit('teamchat:join', teamId);
+            fetchMessages();
+        };
+
+        const handleTypingEvent = ({ userId, userName, isTyping }) => {
             setTypingUsers((prev) => {
                 const next = { ...prev };
                 if (isTyping) next[userId] = userName;
                 else delete next[userId];
                 return next;
             });
-        });
+        };
 
-        socket.on('teamchat:online', ({ userId, online }) => {
-            // Could be used for online indicators
-        });
+        socket.on('teamchat:message', handleMessage);
+        socket.on('connect', handleReconnect);
+        socket.on('teamchat:typing', handleTypingEvent);
+        socket.on('teamchat:online', () => { });
 
         return () => {
             socket.emit('teamchat:leave', teamId);
-            socket.off('teamchat:message');
-            socket.off('teamchat:typing');
+            socket.off('teamchat:message', handleMessage);
+            socket.off('connect', handleReconnect);
+            socket.off('teamchat:typing', handleTypingEvent);
             socket.off('teamchat:online');
         };
-    }, [socket, teamId]);
+    }, [socket, teamId, fetchMessages]);
+
+    // Polling fallback — refetch every 10s to catch any missed messages
+    useEffect(() => {
+        const interval = setInterval(fetchMessages, 10000);
+        return () => clearInterval(interval);
+    }, [fetchMessages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,7 +98,11 @@ export default function TeamChat({ teamId }) {
         e.preventDefault();
         if (!input.trim()) return;
         try {
-            await api.post(`/chat/${teamId}/messages`, { content: input });
+            const res = await api.post(`/chat/${teamId}/messages`, { content: input });
+            setMessages((prev) => {
+                if (prev.some((m) => m._id === res.data._id)) return prev;
+                return [...prev, res.data];
+            });
             setInput('');
             if (socket) socket.emit('teamchat:typing', { teamId, isTyping: false, userName: '' });
         } catch (err) {
@@ -79,12 +116,17 @@ export default function TeamChat({ teamId }) {
         const formData = new FormData();
         formData.append('file', file);
         try {
-            await api.post(`/chat/${teamId}/upload`, formData, {
+            const res = await api.post(`/chat/${teamId}/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setMessages((prev) => {
+                if (prev.some((m) => m._id === res.data._id)) return prev;
+                return [...prev, res.data];
             });
         } catch (err) {
             console.error('File upload error:', err);
         }
+        e.target.value = '';
     };
 
     const typingList = Object.values(typingUsers).filter(Boolean);

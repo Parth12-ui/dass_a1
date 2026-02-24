@@ -25,14 +25,17 @@ export default function Forum({ eventId, isOrganizer = false }) {
 
         socket.on('forum:message', (msg) => {
             setMessages((prev) => {
+                // Deduplicate — skip if already added by optimistic update
                 if (msg.parentMessage) {
-                    // Add as reply to parent
+                    const parent = prev.find((m) => m._id === msg.parentMessage);
+                    if (parent?.replies?.some((r) => r._id === msg._id)) return prev;
                     return prev.map((m) =>
                         m._id === msg.parentMessage
                             ? { ...m, replies: [...(m.replies || []), msg] }
                             : m
                     );
                 }
+                if (prev.some((m) => m._id === msg._id)) return prev;
                 return [msg, ...prev];
             });
         });
@@ -47,7 +50,7 @@ export default function Forum({ eventId, isOrganizer = false }) {
             );
         });
 
-        socket.on('forum:reaction', ({ messageId, emoji, reactions }) => {
+        socket.on('forum:reaction', ({ messageId, reactions }) => {
             setMessages((prev) =>
                 prev.map((m) => (m._id === messageId ? { ...m, reactions } : m))
             );
@@ -66,10 +69,24 @@ export default function Forum({ eventId, isOrganizer = false }) {
         e.preventDefault();
         if (!input.trim()) return;
         try {
-            await api.post(`/forum/${eventId}/messages`, {
+            const res = await api.post(`/forum/${eventId}/messages`, {
                 content: input,
                 parentMessage: replyTo,
                 isAnnouncement,
+            });
+            // Optimistic update — add message to state immediately
+            const newMsg = res.data;
+            setMessages((prev) => {
+                if (newMsg.parentMessage) {
+                    if (prev.find((m) => m._id === newMsg.parentMessage)?.replies?.some((r) => r._id === newMsg._id)) return prev;
+                    return prev.map((m) =>
+                        m._id === newMsg.parentMessage
+                            ? { ...m, replies: [...(m.replies || []), newMsg] }
+                            : m
+                    );
+                }
+                if (prev.some((m) => m._id === newMsg._id)) return prev;
+                return [newMsg, ...prev];
             });
             setInput('');
             setReplyTo(null);
@@ -83,6 +100,11 @@ export default function Forum({ eventId, isOrganizer = false }) {
         if (!confirm('Delete this message?')) return;
         try {
             await api.delete(`/forum/messages/${msgId}`);
+            // Optimistic update — remove message immediately
+            setMessages((prev) => prev.filter((m) => m._id !== msgId).map((m) => ({
+                ...m,
+                replies: m.replies?.filter((r) => r._id !== msgId),
+            })));
         } catch (err) {
             console.error('Delete error:', err);
         }
@@ -90,7 +112,11 @@ export default function Forum({ eventId, isOrganizer = false }) {
 
     const pinMessage = async (msgId) => {
         try {
-            await api.put(`/forum/messages/${msgId}/pin`);
+            const res = await api.put(`/forum/messages/${msgId}/pin`);
+            // Optimistic update — toggle pin state immediately
+            setMessages((prev) =>
+                prev.map((m) => (m._id === msgId ? { ...m, isPinned: res.data.isPinned } : m))
+            );
         } catch (err) {
             console.error('Pin error:', err);
         }
@@ -98,7 +124,11 @@ export default function Forum({ eventId, isOrganizer = false }) {
 
     const reactToMessage = async (msgId, emoji) => {
         try {
-            await api.post(`/forum/messages/${msgId}/react`, { emoji });
+            const res = await api.post(`/forum/messages/${msgId}/react`, { emoji });
+            // Optimistic update — update reactions immediately
+            setMessages((prev) =>
+                prev.map((m) => (m._id === msgId ? { ...m, reactions: res.data.reactions } : m))
+            );
         } catch (err) {
             console.error('React error:', err);
         }

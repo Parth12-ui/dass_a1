@@ -12,7 +12,7 @@ const { sendTicketEmail, sendTeamInviteEmail } = require('../utils/email');
  */
 const createTeam = async (req, res) => {
     try {
-        const { eventId, name } = req.body;
+        const { eventId, name, formResponses } = req.body;
         if (!eventId || !name) {
             return res.status(400).json({ message: 'Event ID and team name are required' });
         }
@@ -22,6 +22,24 @@ const createTeam = async (req, res) => {
         if (!event.isTeamEvent) return res.status(400).json({ message: 'This is not a team event' });
         if (event.status !== 'published' && event.status !== 'ongoing') {
             return res.status(400).json({ message: 'Event is not open for registration' });
+        }
+
+        // Eligibility check
+        const user = await User.findById(req.user.id);
+        if (event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+            return res.status(403).json({ message: 'You are not eligible for this event' });
+        }
+
+        // Validate required custom form fields
+        if (event.customForm && event.customForm.length > 0) {
+            for (const field of event.customForm) {
+                if (field.required) {
+                    const val = formResponses?.[field.label];
+                    if (!val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && !val.trim())) {
+                        return res.status(400).json({ message: `Required field missing: ${field.label}` });
+                    }
+                }
+            }
         }
 
         // Check if user is already in a team for this event
@@ -41,6 +59,11 @@ const createTeam = async (req, res) => {
             members: [req.user.id],
             maxSize: event.teamSize?.max || 4,
         });
+
+        // Store leader's form responses
+        if (formResponses && Object.keys(formResponses).length > 0) {
+            team.memberFormResponses.set(req.user.id, formResponses);
+        }
 
         await team.save();
 
@@ -63,13 +86,33 @@ const createTeam = async (req, res) => {
  */
 const joinTeam = async (req, res) => {
     try {
-        const { inviteCode } = req.body;
+        const { inviteCode, formResponses } = req.body;
         if (!inviteCode) return res.status(400).json({ message: 'Invite code is required' });
 
         const team = await Team.findOne({ inviteCode: inviteCode.toUpperCase() });
         if (!team) return res.status(404).json({ message: 'Invalid invite code' });
         if (team.status === 'disbanded') return res.status(400).json({ message: 'Team has been disbanded' });
         if (team.status === 'complete') return res.status(400).json({ message: 'Team is already full' });
+        if (team.status === 'closed') return res.status(400).json({ message: 'Team is closed and not accepting new members' });
+
+        // Eligibility check
+        const event = await Event.findById(team.event);
+        const user = await User.findById(req.user.id);
+        if (event && event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+            return res.status(403).json({ message: 'You are not eligible for this event' });
+        }
+
+        // Validate required custom form fields
+        if (event && event.customForm && event.customForm.length > 0) {
+            for (const field of event.customForm) {
+                if (field.required) {
+                    const val = formResponses?.[field.label];
+                    if (!val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && !val.trim())) {
+                        return res.status(400).json({ message: `Required field missing: ${field.label}` });
+                    }
+                }
+            }
+        }
 
         // Check if already in a team for this event
         const existingTeam = await Team.findOne({
@@ -86,6 +129,11 @@ const joinTeam = async (req, res) => {
         }
 
         team.members.push(req.user.id);
+
+        // Store member's form responses
+        if (formResponses && Object.keys(formResponses).length > 0) {
+            team.memberFormResponses.set(req.user.id, formResponses);
+        }
 
         // Auto-complete if team is now full
         if (team.members.length >= team.maxSize) {
@@ -134,6 +182,7 @@ async function generateTeamTickets(team) {
             qrCode,
             status: 'confirmed',
             paymentStatus: event.registrationFee > 0 ? 'paid' : 'na',
+            formResponses: team.memberFormResponses?.get(memberId.toString()) || {},
         });
         await registration.save();
 
@@ -243,10 +292,71 @@ const leaveTeam = async (req, res) => {
     }
 };
 
+/**
+ * POST /api/teams/:id/close
+ * Leader closes the team (stops new joins, generates tickets)
+ */
+const closeTeam = async (req, res) => {
+    try {
+        const team = await Team.findById(req.params.id);
+        if (!team) return res.status(404).json({ message: 'Team not found' });
+        if (team.leader.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Only the team leader can close the team' });
+        }
+        if (team.status !== 'forming') {
+            return res.status(400).json({ message: `Cannot close a team with status '${team.status}'` });
+        }
+
+        team.status = 'closed';
+        await team.save();
+
+        // Generate tickets for all current members
+        await generateTeamTickets(team);
+
+        await team.populate('leader', 'firstName lastName email');
+        await team.populate('members', 'firstName lastName email');
+
+        res.json({ message: 'Team closed. Tickets generated for all members.', team });
+    } catch (err) {
+        console.error('Close team error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+/**
+ * POST /api/teams/:id/reopen
+ * Leader reopens a closed team
+ */
+const reopenTeam = async (req, res) => {
+    try {
+        const team = await Team.findById(req.params.id);
+        if (!team) return res.status(404).json({ message: 'Team not found' });
+        if (team.leader.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Only the team leader can reopen the team' });
+        }
+        if (team.status !== 'closed') {
+            return res.status(400).json({ message: 'Team is not closed' });
+        }
+
+        team.status = 'forming';
+        await team.save();
+
+        await team.populate('leader', 'firstName lastName email');
+        await team.populate('members', 'firstName lastName email');
+
+        res.json({ message: 'Team reopened. New members can join again.', team });
+    } catch (err) {
+        console.error('Reopen team error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = {
     createTeam,
     joinTeam,
     getMyTeams,
     getTeamDetail,
     leaveTeam,
+    closeTeam,
+    reopenTeam,
 };

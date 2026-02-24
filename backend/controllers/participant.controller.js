@@ -8,7 +8,7 @@ const { sendTicketEmail } = require('../utils/email');
 
 /**
  * GET /api/participants/dashboard
- * My events: upcoming + participation history
+ * My events: upcoming + participation history + team memberships
  */
 const getDashboard = async (req, res) => {
     try {
@@ -18,6 +18,17 @@ const getDashboard = async (req, res) => {
         const registrations = await Registration.find({ participant: userId })
             .populate('event')
             .sort({ registeredAt: -1 });
+
+        // Also fetch teams the user is part of (for team events that haven't generated tickets yet)
+        const Team = require('../models/Team');
+        const teams = await Team.find({
+            members: userId,
+            status: { $ne: 'disbanded' },
+        })
+            .populate('event', 'name type status startDate endDate isTeamEvent')
+            .populate('leader', 'firstName lastName')
+            .populate('members', 'firstName lastName')
+            .sort({ createdAt: -1 });
 
         const now = new Date();
 
@@ -36,7 +47,7 @@ const getDashboard = async (req, res) => {
             ),
         };
 
-        res.json({ upcoming, history });
+        res.json({ upcoming, history, teams });
     } catch (err) {
         console.error('Dashboard error:', err);
         res.status(500).json({ message: 'Server error' });
@@ -196,10 +207,15 @@ const getEventDetail = async (req, res) => {
             participant: req.user.id,
         });
 
+        // Check eligibility
+        const user = await User.findById(req.user.id);
+        const isEligible = event.eligibility === 'all' || event.eligibility === user.participantType;
+
         res.json({
             event,
             isRegistered: !!existingReg,
             registration: existingReg || null,
+            isEligible,
         });
     } catch (err) {
         console.error('Event detail error:', err);
@@ -310,6 +326,12 @@ const purchaseMerchandise = async (req, res) => {
         }
         if (new Date() > new Date(event.registrationDeadline)) {
             return res.status(400).json({ message: 'Purchase deadline has passed' });
+        }
+
+        // Eligibility check
+        const user = await User.findById(req.user.id);
+        if (event.eligibility !== 'all' && event.eligibility !== user.participantType) {
+            return res.status(403).json({ message: 'You are not eligible for this event' });
         }
 
         const { selections } = req.body; // [{ itemId, size, color, variant, quantity }]

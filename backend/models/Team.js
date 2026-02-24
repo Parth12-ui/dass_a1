@@ -35,8 +35,14 @@ const teamSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['forming', 'complete', 'disbanded'],
+            enum: ['forming', 'complete', 'closed', 'disbanded'],
             default: 'forming',
+        },
+        // Per-member custom form responses, keyed by userId string
+        memberFormResponses: {
+            type: Map,
+            of: mongoose.Schema.Types.Mixed,
+            default: {},
         },
     },
     { timestamps: true }

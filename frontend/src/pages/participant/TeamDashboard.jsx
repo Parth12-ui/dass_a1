@@ -37,7 +37,7 @@ export default function TeamDashboard() {
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                 <h3 style={{ margin: 0, color: 'var(--accent)' }}>{team.name}</h3>
-                                <span className={`badge ${team.status === 'complete' ? 'badge-success' : team.status === 'forming' ? 'badge-warning' : 'badge-danger'}`}>
+                                <span className={`badge ${team.status === 'complete' ? 'badge-success' : team.status === 'forming' ? 'badge-warning' : team.status === 'closed' ? 'badge-accent' : 'badge-danger'}`}>
                                     {team.status}
                                 </span>
                             </div>

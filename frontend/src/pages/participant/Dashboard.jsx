@@ -19,6 +19,7 @@ export default function Dashboard() {
 
     const tabs = [
         { key: 'upcoming', label: 'Upcoming' },
+        { key: 'teams', label: '👥 Teams' },
         { key: 'normal', label: 'Normal' },
         { key: 'merchandise', label: 'Merchandise' },
         { key: 'completed', label: 'Completed' },
@@ -27,6 +28,7 @@ export default function Dashboard() {
 
     const getRecords = () => {
         if (activeTab === 'upcoming') return data?.upcoming || [];
+        if (activeTab === 'teams') return data?.teams || [];
         return data?.history?.[activeTab] || [];
     };
 
@@ -36,7 +38,7 @@ export default function Dashboard() {
         <div className="page-container">
             <div className="page-header">
                 <h1>My Events</h1>
-                <p>Track your registrations and event history</p>
+                <p>Track your registrations, teams, and event history</p>
             </div>
 
             <div className="tabs">
@@ -50,10 +52,41 @@ export default function Dashboard() {
             {records.length === 0 ? (
                 <div className="empty-state">
                     <div className="emoji">📭</div>
-                    <p>No events in this category</p>
+                    <p>No {activeTab === 'teams' ? 'teams' : 'events'} in this category</p>
                     <Link to="/browse" className="btn btn-primary" style={{ marginTop: '1rem' }}>Browse Events</Link>
                 </div>
+            ) : activeTab === 'teams' ? (
+                /* Team cards */
+                <div className="grid-3">
+                    {records.map((team) => (
+                        <Link key={team._id} to={`/teams/${team._id}`} className="glass-card card-hover" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                <h3 style={{ margin: 0, color: 'var(--accent)' }}>{team.name}</h3>
+                                <span className={`badge ${team.status === 'complete' ? 'badge-green' : team.status === 'forming' ? 'badge-yellow' : 'badge-red'}`}>
+                                    {team.status}
+                                </span>
+                            </div>
+                            <p style={{ opacity: 0.7, marginBottom: '0.5rem', fontSize: 'var(--font-sm)' }}>
+                                📅 {team.event?.name || 'Unknown Event'}
+                            </p>
+                            <p style={{ opacity: 0.6, fontSize: 'var(--font-xs)' }}>
+                                👥 {team.members?.length || 0}/{team.maxSize} members
+                            </p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', fontSize: 'var(--font-xs)', opacity: 0.5 }}>
+                                <span>Leader: {team.leader?.firstName} {team.leader?.lastName}</span>
+                                <span className={`badge ${team.event?.status === 'published' ? 'badge-green' : 'badge-blue'}`} style={{ fontSize: '0.65rem' }}>
+                                    {team.event?.status}
+                                </span>
+                            </div>
+                            <div style={{ marginTop: '0.75rem', padding: '0.4rem', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', textAlign: 'center', fontSize: 'var(--font-xs)' }}>
+                                <span style={{ opacity: 0.6 }}>Invite:</span>{' '}
+                                <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent)' }}>{team.inviteCode}</span>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             ) : (
+                /* Registration cards */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {records.map((reg) => (
                         <div key={reg._id} className="glass-card fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>

@@ -8,6 +8,7 @@ export default function EventDetail() {
     const { id } = useParams();
     const [event, setEvent] = useState(null);
     const [isRegistered, setIsRegistered] = useState(false);
+    const [isEligible, setIsEligible] = useState(true);
     const [registration, setRegistration] = useState(null);
     const [formResponses, setFormResponses] = useState({});
     const [merchSelections, setMerchSelections] = useState([]);
@@ -40,6 +41,7 @@ export default function EventDetail() {
                 setEvent(res.data.event);
                 setIsRegistered(res.data.isRegistered);
                 setRegistration(res.data.registration);
+                setIsEligible(res.data.isEligible !== false);
             })
             .catch(console.error)
             .finally(() => setLoading(false));
@@ -93,10 +95,22 @@ export default function EventDetail() {
             setMessage({ type: 'error', text: 'Please enter a team name' });
             return;
         }
+        // Validate required custom form fields
+        if (event.customForm?.length > 0) {
+            for (const field of event.customForm) {
+                if (field.required) {
+                    const val = formResponses[field.label];
+                    if (!val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && !val.trim())) {
+                        setMessage({ type: 'error', text: `Please fill in the required field: ${field.label}` });
+                        return;
+                    }
+                }
+            }
+        }
         setSubmitting(true);
         setMessage({ type: '', text: '' });
         try {
-            const res = await API.post('/teams/create', { eventId: id, name: teamName });
+            const res = await API.post('/teams/create', { eventId: id, name: teamName, formResponses });
             setMessage({ type: 'success', text: `Team created! Invite code: ${res.data.team.inviteCode}` });
             setShowCreateTeam(false);
         } catch (err) {
@@ -111,10 +125,22 @@ export default function EventDetail() {
             setMessage({ type: 'error', text: 'Please enter an invite code' });
             return;
         }
+        // Validate required custom form fields
+        if (event.customForm?.length > 0) {
+            for (const field of event.customForm) {
+                if (field.required) {
+                    const val = formResponses[field.label];
+                    if (!val || (Array.isArray(val) && val.length === 0) || (typeof val === 'string' && !val.trim())) {
+                        setMessage({ type: 'error', text: `Please fill in the required field: ${field.label}` });
+                        return;
+                    }
+                }
+            }
+        }
         setSubmitting(true);
         setMessage({ type: '', text: '' });
         try {
-            await API.post('/teams/join', { inviteCode });
+            await API.post('/teams/join', { inviteCode, formResponses });
             setMessage({ type: 'success', text: 'Successfully joined the team!' });
             setShowJoinTeam(false);
         } catch (err) {
@@ -211,8 +237,8 @@ export default function EventDetail() {
                             </div>
                         )}
 
-                        {/* Custom Form (Normal) */}
-                        {event.type === 'normal' && event.customForm?.length > 0 && !isRegistered && (
+                        {/* Custom Form (for NON-team events with custom fields, shown when not registered) */}
+                        {event.customForm?.length > 0 && !isRegistered && !event.isTeamEvent && (
                             <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ marginBottom: '1rem' }}>Registration Form</h3>
                                 {event.customForm.map((field) => (
@@ -442,6 +468,10 @@ export default function EventDetail() {
                                     <div className="badge badge-red" style={{ width: '100%', justifyContent: 'center', padding: '0.5rem' }}>
                                         🚫 Registration Full
                                     </div>
+                                ) : !isEligible ? (
+                                    <div className="badge badge-red" style={{ width: '100%', justifyContent: 'center', padding: '0.5rem', textAlign: 'center' }}>
+                                        🚫 Not eligible — this event is for {event.eligibility} participants only
+                                    </div>
                                 ) : event.isTeamEvent ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                         <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', textAlign: 'center' }}>
@@ -466,6 +496,59 @@ export default function EventDetail() {
                                                     <label>Team Name</label>
                                                     <input className="form-input" placeholder="Enter team name" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
                                                 </div>
+                                                {/* Required custom form fields inline */}
+                                                {event.customForm?.length > 0 && (
+                                                    <div style={{ marginBottom: '0.75rem' }}>
+                                                        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Registration Fields</p>
+                                                        {event.customForm.map((field) => (
+                                                            <div key={field._id} className="form-group" style={{ marginBottom: '0.5rem' }}>
+                                                                <label style={{ fontSize: 'var(--font-sm)' }}>{field.label} {field.required && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
+                                                                {field.fieldType === 'text' || field.fieldType === 'email' || field.fieldType === 'number' ? (
+                                                                    <input type={field.fieldType} className="form-input" required={field.required}
+                                                                        value={formResponses[field.label] || ''}
+                                                                        onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })} />
+                                                                ) : field.fieldType === 'textarea' ? (
+                                                                    <textarea className="form-input" required={field.required}
+                                                                        value={formResponses[field.label] || ''}
+                                                                        onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })} />
+                                                                ) : field.fieldType === 'dropdown' ? (
+                                                                    <select className="form-input" required={field.required}
+                                                                        value={formResponses[field.label] || ''}
+                                                                        onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })}>
+                                                                        <option value="">Select...</option>
+                                                                        {field.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                                                    </select>
+                                                                ) : field.fieldType === 'checkbox' ? (
+                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                                        {field.options?.map((opt) => (
+                                                                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: 'var(--font-xs)' }}>
+                                                                                <input type="checkbox"
+                                                                                    checked={(formResponses[field.label] || []).includes(opt)}
+                                                                                    onChange={(e) => {
+                                                                                        const cur = formResponses[field.label] || [];
+                                                                                        setFormResponses({
+                                                                                            ...formResponses,
+                                                                                            [field.label]: e.target.checked ? [...cur, opt] : cur.filter((v) => v !== opt),
+                                                                                        });
+                                                                                    }} /> {opt}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : field.fieldType === 'radio' ? (
+                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                                        {field.options?.map((opt) => (
+                                                                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: 'var(--font-xs)' }}>
+                                                                                <input type="radio" name={`team-form-create-${field._id}`}
+                                                                                    checked={formResponses[field.label] === opt}
+                                                                                    onChange={() => setFormResponses({ ...formResponses, [field.label]: opt })} /> {opt}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                     <button className="btn btn-primary btn-sm" onClick={handleCreateTeam} disabled={submitting}>
                                                         {submitting ? 'Creating...' : 'Create'}
@@ -480,6 +563,59 @@ export default function EventDetail() {
                                                     <label>Invite Code</label>
                                                     <input className="form-input" placeholder="e.g. A1B2C3D4" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
                                                 </div>
+                                                {/* Required custom form fields inline */}
+                                                {event.customForm?.length > 0 && (
+                                                    <div style={{ marginBottom: '0.75rem' }}>
+                                                        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Registration Fields</p>
+                                                        {event.customForm.map((field) => (
+                                                            <div key={field._id} className="form-group" style={{ marginBottom: '0.5rem' }}>
+                                                                <label style={{ fontSize: 'var(--font-sm)' }}>{field.label} {field.required && <span style={{ color: 'var(--danger)' }}>*</span>}</label>
+                                                                {field.fieldType === 'text' || field.fieldType === 'email' || field.fieldType === 'number' ? (
+                                                                    <input type={field.fieldType} className="form-input" required={field.required}
+                                                                        value={formResponses[field.label] || ''}
+                                                                        onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })} />
+                                                                ) : field.fieldType === 'textarea' ? (
+                                                                    <textarea className="form-input" required={field.required}
+                                                                        value={formResponses[field.label] || ''}
+                                                                        onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })} />
+                                                                ) : field.fieldType === 'dropdown' ? (
+                                                                    <select className="form-input" required={field.required}
+                                                                        value={formResponses[field.label] || ''}
+                                                                        onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })}>
+                                                                        <option value="">Select...</option>
+                                                                        {field.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                                                    </select>
+                                                                ) : field.fieldType === 'checkbox' ? (
+                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                                        {field.options?.map((opt) => (
+                                                                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: 'var(--font-xs)' }}>
+                                                                                <input type="checkbox"
+                                                                                    checked={(formResponses[field.label] || []).includes(opt)}
+                                                                                    onChange={(e) => {
+                                                                                        const cur = formResponses[field.label] || [];
+                                                                                        setFormResponses({
+                                                                                            ...formResponses,
+                                                                                            [field.label]: e.target.checked ? [...cur, opt] : cur.filter((v) => v !== opt),
+                                                                                        });
+                                                                                    }} /> {opt}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : field.fieldType === 'radio' ? (
+                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                                        {field.options?.map((opt) => (
+                                                                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: 'var(--font-xs)' }}>
+                                                                                <input type="radio" name={`team-form-join-${field._id}`}
+                                                                                    checked={formResponses[field.label] === opt}
+                                                                                    onChange={() => setFormResponses({ ...formResponses, [field.label]: opt })} /> {opt}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                     <button className="btn btn-primary btn-sm" onClick={handleJoinTeam} disabled={submitting}>
                                                         {submitting ? 'Joining...' : 'Join'}
