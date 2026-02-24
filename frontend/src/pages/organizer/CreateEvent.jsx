@@ -13,6 +13,7 @@ export default function CreateEvent() {
         name: '', description: '', type: 'normal', eligibility: 'all',
         startDate: '', endDate: '', registrationDeadline: '',
         registrationLimit: 0, registrationFee: 0, tags: '',
+        isTeamEvent: false, minTeamSize: 2, maxTeamSize: 4,
         customForm: [], merchandiseItems: [],
     });
 
@@ -60,6 +61,8 @@ export default function CreateEvent() {
                 tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
                 registrationLimit: Number(form.registrationLimit),
                 registrationFee: Number(form.registrationFee),
+                isTeamEvent: form.isTeamEvent,
+                teamSize: form.isTeamEvent ? { min: Number(form.minTeamSize), max: Number(form.maxTeamSize) } : undefined,
             };
 
             // Process custom form options
@@ -172,6 +175,26 @@ export default function CreateEvent() {
                         <div className="form-group">
                             <label>Tags (comma-separated)</label>
                             <input name="tags" className="form-input" placeholder="tech, coding, hackathon" value={form.tags} onChange={handleChange} />
+                        </div>
+
+                        {/* Team Event Settings */}
+                        <div className="glass-card" style={{ padding: '1rem', marginBottom: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600, marginBottom: form.isTeamEvent ? '1rem' : 0 }}>
+                                <input type="checkbox" checked={form.isTeamEvent} onChange={(e) => setForm({ ...form, isTeamEvent: e.target.checked })} />
+                                👥 Team Event
+                            </label>
+                            {form.isTeamEvent && (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div className="form-group">
+                                        <label>Min Team Size</label>
+                                        <input name="minTeamSize" type="number" className="form-input" min="2" value={form.minTeamSize} onChange={handleChange} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Max Team Size</label>
+                                        <input name="maxTeamSize" type="number" className="form-input" min="2" value={form.maxTeamSize} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <button className="btn btn-primary" onClick={() => setStep(2)}>Next →</button>
@@ -293,6 +316,7 @@ export default function CreateEvent() {
                             <div><strong>Limit:</strong> {form.registrationLimit || 'Unlimited'}</div>
                             <div><strong>Fee:</strong> ₹{form.registrationFee}</div>
                             <div><strong>Tags:</strong> {form.tags || 'None'}</div>
+                            {form.isTeamEvent && <div><strong>Team Event:</strong> {form.minTeamSize}–{form.maxTeamSize} members</div>}
                             {form.type === 'normal' && <div><strong>Custom Fields:</strong> {form.customForm.length}</div>}
                             {form.type === 'merchandise' && <div><strong>Merch Items:</strong> {form.merchandiseItems.length}</div>}
                         </div>
