@@ -385,10 +385,16 @@ const purchaseMerchandise = async (req, res) => {
             });
         }
 
-        // Create registration in PENDING state (no stock decrement, no ticket yet)
+        // Create registration in PENDING state (no stock decrement yet)
+        // Generate a ticket ID upfront (required by schema)
+        const ticketId = `TKT-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
+        const qrCode = await generateQR(ticketId);
+
         const registration = new Registration({
             event: event._id,
             participant: req.user.id,
+            ticketId,
+            qrCode,
             status: 'pending',
             merchandiseSelections,
             paymentStatus: totalCost > 0 ? 'pending_approval' : 'na',
