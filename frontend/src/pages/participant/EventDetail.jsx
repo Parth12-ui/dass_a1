@@ -170,15 +170,17 @@ export default function EventDetail() {
 
     // Payment proof upload
     const handlePaymentProofUpload = async () => {
-        if (!paymentFile) return;
+        if (!paymentFile || !registration?._id) return;
         setUploadingProof(true);
         try {
             const formData = new FormData();
             formData.append('paymentProof', paymentFile);
-            await API.post(`/participants/events/${id}/payment-proof`, formData, {
+            formData.append('registrationId', registration._id);
+            const res = await API.post(`/participants/events/${id}/payment-proof`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             setMessage({ type: 'success', text: 'Payment proof uploaded successfully!' });
+            setRegistration({ ...registration, paymentProofUrl: res.data.paymentProofUrl });
             setPaymentFile(null);
         } catch (err) {
             setMessage({ type: 'error', text: err.response?.data?.message || 'Upload failed' });
@@ -395,32 +397,54 @@ export default function EventDetail() {
                             </div>
                         )}
 
-                        {/* Ticket display */}
+                        {/* Ticket / Order Status display */}
                         {isRegistered && registration && (
                             <div className="ticket" style={{ marginBottom: '1.5rem' }}>
                                 <div className="ticket-header">
-                                    <h3>🎫 Your Ticket</h3>
+                                    <h3>{registration.status === 'confirmed' && registration.ticketId ? '🎫 Your Ticket' : '📦 Order Status'}</h3>
                                 </div>
                                 <div className="ticket-body">
-                                    {registration.qrCode && <img src={registration.qrCode} alt="QR Code" className="qr-code" />}
-                                    <div className="ticket-id">{registration.ticketId}</div>
-                                    <div className="ticket-info">
-                                        <div><span>Event</span><span>{event.name}</span></div>
-                                        <div><span>Status</span><span>{registration.status}</span></div>
-                                        <div><span>Date</span><span>{new Date(registration.registeredAt).toLocaleDateString()}</span></div>
-                                    </div>
-                                    <button className="btn btn-secondary btn-sm" style={{ marginTop: '0.75rem', width: '100%' }} onClick={handleViewTicket}>
-                                        {showFullTicket ? 'Hide Full Ticket' : '🔍 View Full Ticket'}
-                                    </button>
-                                    {showFullTicket && ticketData && (
-                                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', fontSize: 'var(--font-xs)' }}>
-                                            {ticketData.qrCode && <img src={ticketData.qrCode} alt="Full QR" style={{ width: '200px', margin: '0 auto 0.5rem', display: 'block' }} />}
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                <div><strong>Ticket ID:</strong> {ticketData.ticketId}</div>
-                                                <div><strong>Event:</strong> {ticketData.eventName}</div>
-                                                <div><strong>Participant:</strong> {ticketData.participantName}</div>
-                                                <div><strong>Status:</strong> {ticketData.status}</div>
-                                                <div><strong>Registered:</strong> {new Date(ticketData.registeredAt).toLocaleString()}</div>
+                                    {registration.status === 'confirmed' && registration.ticketId ? (
+                                        /* Approved — show QR and ticket */
+                                        <>
+                                            {registration.qrCode && <img src={registration.qrCode} alt="QR Code" className="qr-code" />}
+                                            <div className="ticket-id">{registration.ticketId}</div>
+                                            <div className="ticket-info">
+                                                <div><span>Event</span><span>{event.name}</span></div>
+                                                <div><span>Status</span><span style={{ color: 'var(--success)' }}>✅ Confirmed</span></div>
+                                                <div><span>Date</span><span>{new Date(registration.registeredAt).toLocaleDateString()}</span></div>
+                                            </div>
+                                            <button className="btn btn-secondary btn-sm" style={{ marginTop: '0.75rem', width: '100%' }} onClick={handleViewTicket}>
+                                                {showFullTicket ? 'Hide Full Ticket' : '🔍 View Full Ticket'}
+                                            </button>
+                                            {showFullTicket && ticketData && (
+                                                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', fontSize: 'var(--font-xs)' }}>
+                                                    {ticketData.qrCode && <img src={ticketData.qrCode} alt="Full QR" style={{ width: '200px', margin: '0 auto 0.5rem', display: 'block' }} />}
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <div><strong>Ticket ID:</strong> {ticketData.ticketId}</div>
+                                                        <div><strong>Event:</strong> {ticketData.eventName}</div>
+                                                        <div><strong>Participant:</strong> {ticketData.participantName}</div>
+                                                        <div><strong>Status:</strong> {ticketData.status}</div>
+                                                        <div><strong>Registered:</strong> {new Date(ticketData.registeredAt).toLocaleString()}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        /* Pending or Rejected — show status, no QR */
+                                        <div style={{ textAlign: 'center', padding: '1rem' }}>
+                                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                                                {registration.status === 'rejected' ? '❌' : '⏳'}
+                                            </div>
+                                            <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                                {registration.status === 'rejected' ? 'Order Rejected' : 'Order Pending Approval'}
+                                            </div>
+                                            <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>
+                                                {registration.status === 'rejected'
+                                                    ? 'Your order was rejected by the organizer.'
+                                                    : registration.paymentProofUrl
+                                                        ? 'Payment proof uploaded. Waiting for organizer approval.'
+                                                        : 'Please upload payment proof below to proceed.'}
                                             </div>
                                         </div>
                                     )}
@@ -428,8 +452,8 @@ export default function EventDetail() {
                             </div>
                         )}
 
-                        {/* Payment Proof Upload (for merchandise with fee) */}
-                        {isRegistered && event.type === 'merchandise' && event.registrationFee > 0 && (
+                        {/* Payment Proof Upload (for merchandise orders in pending_approval state) */}
+                        {isRegistered && registration && event.type === 'merchandise' && registration.paymentStatus === 'pending_approval' && !registration.paymentProofUrl && (
                             <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ marginBottom: '0.75rem' }}>💳 Upload Payment Proof</h3>
                                 <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
@@ -442,6 +466,15 @@ export default function EventDetail() {
                                         disabled={!paymentFile || uploadingProof}>
                                         {uploadingProof ? 'Uploading...' : '📤 Upload'}
                                     </button>
+                                </div>
+                            </div>
+                        )}
+                        {/* Payment Proof Already Uploaded */}
+                        {isRegistered && registration && event.type === 'merchandise' && registration.paymentProofUrl && registration.paymentStatus === 'pending_approval' && (
+                            <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ marginBottom: '0.75rem' }}>💳 Payment Proof Uploaded</h3>
+                                <div className="badge badge-yellow" style={{ padding: '0.5rem', justifyContent: 'center', width: '100%' }}>
+                                    ✅ Proof submitted — awaiting organizer approval
                                 </div>
                             </div>
                         )}

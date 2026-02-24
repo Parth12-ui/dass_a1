@@ -14,8 +14,7 @@ const registrationSchema = new mongoose.Schema(
         },
         ticketId: {
             type: String,
-            required: true,
-            unique: true,
+            default: '',
         },
         qrCode: {
             type: String, // base64 data URL
@@ -65,5 +64,7 @@ const registrationSchema = new mongoose.Schema(
 
 // Compound index: one registration per participant per event
 registrationSchema.index({ event: 1, participant: 1 }, { unique: true });
+// Sparse unique index on ticketId (only enforced when ticketId is non-empty)
+registrationSchema.index({ ticketId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Registration', registrationSchema);
