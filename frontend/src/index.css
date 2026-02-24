@@ -655,7 +655,7 @@ tr:hover td {
 }
 
 .ticket-header {
-  background: var(--accent);
+  background: #222;
   padding: 1.25rem;
   text-align: center;
 }
