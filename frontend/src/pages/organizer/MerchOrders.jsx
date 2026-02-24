@@ -125,7 +125,7 @@ export default function MerchOrders() {
                                 <div style={{ marginBottom: '1rem' }}>
                                     <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '0.5rem' }}>Payment Proof:</p>
                                     <img
-                                        src={order.paymentProofUrl}
+                                        src={`${(import.meta.env.VITE_API_URL || '').replace('/api', '')}${order.paymentProofUrl}`}
                                         alt="Payment proof"
                                         style={{ maxWidth: '300px', maxHeight: '200px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
                                     />

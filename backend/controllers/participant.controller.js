@@ -413,9 +413,16 @@ const purchaseMerchandise = async (req, res) => {
  */
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+// Ensure uploads/payments directory exists
+const paymentsUploadDir = path.join(__dirname, '../uploads/payments');
+if (!fs.existsSync(paymentsUploadDir)) {
+    fs.mkdirSync(paymentsUploadDir, { recursive: true });
+}
 
 const paymentStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads/payments')),
+    destination: (req, file, cb) => cb(null, paymentsUploadDir),
     filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 const uploadPayment = multer({ storage: paymentStorage, limits: { fileSize: 5 * 1024 * 1024 } });
