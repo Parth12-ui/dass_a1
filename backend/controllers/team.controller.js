@@ -307,6 +307,16 @@ const closeTeam = async (req, res) => {
             return res.status(400).json({ message: `Cannot close a team with status '${team.status}'` });
         }
 
+        // Validate minimum team size
+        const event = await Event.findById(team.event);
+        if (!event) return res.status(404).json({ message: 'Event not found' });
+        const minSize = event.teamSize?.min || 2;
+        if (team.members.length < minSize) {
+            return res.status(400).json({
+                message: `Team needs at least ${minSize} members to register. Current: ${team.members.length}`,
+            });
+        }
+
         team.status = 'closed';
         await team.save();
 

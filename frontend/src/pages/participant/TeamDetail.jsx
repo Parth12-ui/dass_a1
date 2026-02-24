@@ -123,14 +123,31 @@ export default function TeamDetail() {
                             </button>
                         )}
 
-                        {/* Close / Reopen (leader only) */}
+                        {/* Register / Close / Reopen (leader only) */}
                         {user?.id === team.leader?._id && (
                             <>
-                                {team.status === 'forming' && (
-                                    <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handleClose} disabled={closing}>
-                                        {closing ? 'Closing...' : '🔒 Close Team (Generate Tickets)'}
-                                    </button>
-                                )}
+                                {team.status === 'forming' && (() => {
+                                    const minSize = team.event?.teamSize?.min || 2;
+                                    const maxSize = team.event?.teamSize?.max || 4;
+                                    const memberCount = team.members?.length || 0;
+                                    const meetsMin = memberCount >= minSize;
+                                    return (
+                                        <div>
+                                            <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '0.5rem' }}>
+                                                {memberCount}/{minSize} minimum members {meetsMin ? '✅' : '❌'}
+                                                {maxSize > minSize && ` (max ${maxSize})`}
+                                            </div>
+                                            <button
+                                                className="btn btn-primary"
+                                                style={{ width: '100%', fontSize: '1rem', padding: '0.75rem' }}
+                                                onClick={handleClose}
+                                                disabled={closing || !meetsMin}
+                                            >
+                                                {closing ? 'Registering...' : meetsMin ? '🚀 Register Team' : `Need ${minSize - memberCount} more member${minSize - memberCount > 1 ? 's' : ''}`}
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
                                 {team.status === 'closed' && (
                                     <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handleReopen} disabled={closing}>
                                         {closing ? 'Reopening...' : '🔓 Reopen Team'}
