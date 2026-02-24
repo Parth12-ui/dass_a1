@@ -12,6 +12,16 @@ const passwordResetRequestSchema = new mongoose.Schema(
             enum: ['pending', 'approved', 'rejected'],
             default: 'pending',
         },
+        reason: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        adminComment: {
+            type: String,
+            default: '',
+            trim: true,
+        },
         newPassword: {
             type: String, // set upon approval (plaintext temporarily for admin to share, then hashed on save)
             default: '',

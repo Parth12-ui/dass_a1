@@ -31,31 +31,7 @@ function initSocket(io) {
             socket.leave(`forum:${eventId}`);
         });
 
-        // --- Team chat rooms ---
-        socket.on('teamchat:join', (teamId) => {
-            socket.join(`team:${teamId}`);
-            // Notify others user is online
-            socket.to(`team:${teamId}`).emit('teamchat:online', {
-                userId: socket.user.id,
-                online: true,
-            });
-        });
 
-        socket.on('teamchat:leave', (teamId) => {
-            socket.leave(`team:${teamId}`);
-            socket.to(`team:${teamId}`).emit('teamchat:online', {
-                userId: socket.user.id,
-                online: false,
-            });
-        });
-
-        socket.on('teamchat:typing', ({ teamId, isTyping, userName }) => {
-            socket.to(`team:${teamId}`).emit('teamchat:typing', {
-                userId: socket.user.id,
-                userName,
-                isTyping,
-            });
-        });
 
         socket.on('disconnect', () => {
             console.log(`Socket disconnected: ${socket.user.id}`);

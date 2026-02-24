@@ -339,6 +339,12 @@ const updateProfile = async (req, res) => {
  */
 const requestPasswordReset = async (req, res) => {
     try {
+        const { reason } = req.body;
+
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ message: 'Reason is required for password reset request' });
+        }
+
         // Check if there's already a pending request
         const existingRequest = await PasswordResetRequest.findOne({
             organizer: req.user.id,
@@ -351,6 +357,7 @@ const requestPasswordReset = async (req, res) => {
 
         const resetRequest = new PasswordResetRequest({
             organizer: req.user.id,
+            reason: reason.trim(),
         });
 
         await resetRequest.save();
@@ -358,6 +365,22 @@ const requestPasswordReset = async (req, res) => {
         res.status(201).json({ message: 'Password reset request submitted', request: resetRequest });
     } catch (err) {
         console.error('Password reset request error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+/**
+ * GET /api/organizer/password-reset-requests
+ * Get organizer's own password reset request history
+ */
+const getPasswordResetHistory = async (req, res) => {
+    try {
+        const requests = await PasswordResetRequest.find({ organizer: req.user.id })
+            .sort({ createdAt: -1 });
+
+        res.json(requests);
+    } catch (err) {
+        console.error('Get password reset history error:', err);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -502,6 +525,7 @@ module.exports = {
     getProfile,
     updateProfile,
     requestPasswordReset,
+    getPasswordResetHistory,
     getMerchOrders,
     approveOrder,
     rejectOrder,

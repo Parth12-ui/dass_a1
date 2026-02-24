@@ -32,7 +32,7 @@ const organizerRoutes = require('./routes/organizer.routes');
 const adminRoutes = require('./routes/admin.routes');
 const teamRoutes = require('./routes/team.routes');
 const forumRoutes = require('./routes/forum.routes');
-const chatRoutes = require('./routes/chat.routes');
+
 const feedbackRoutes = require('./routes/feedback.routes');
 
 app.use('/api/auth', authRoutes);
@@ -41,7 +41,7 @@ app.use('/api/organizer', organizerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/forum', forumRoutes);
-app.use('/api/chat', chatRoutes);
+
 app.use('/api/feedback', feedbackRoutes);
 
 // Health check

@@ -30,5 +30,6 @@ router.put('/profile', organizerController.updateProfile);
 
 // Password reset request
 router.post('/password-reset-request', organizerController.requestPasswordReset);
+router.get('/password-reset-requests', organizerController.getPasswordResetHistory);
 
 module.exports = router;

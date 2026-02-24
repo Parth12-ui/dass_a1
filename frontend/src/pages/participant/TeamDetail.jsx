@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import Loading from '../../components/Loading';
-import TeamChat from '../../components/TeamChat';
+
 import { useAuth } from '../../context/AuthContext';
 
 export default function TeamDetail() {
@@ -11,7 +11,7 @@ export default function TeamDetail() {
     const { user } = useAuth();
     const [team, setTeam] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [showChat, setShowChat] = useState(false);
+
     const [leaving, setLeaving] = useState(false);
     const [closing, setClosing] = useState(false);
     const [error, setError] = useState('');
@@ -117,16 +117,11 @@ export default function TeamDetail() {
                     </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem' }}>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setShowChat(!showChat)}>
-                                {showChat ? '📋 Hide Chat' : '💬 Team Chat'}
+                        {(team.status === 'forming' || team.status === 'closed') && (
+                            <button className="btn btn-danger" onClick={handleLeave} disabled={leaving}>
+                                {leaving ? 'Leaving...' : '🚪 Leave Team'}
                             </button>
-                            {(team.status === 'forming' || team.status === 'closed') && (
-                                <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleLeave} disabled={leaving}>
-                                    {leaving ? 'Leaving...' : '🚪 Leave Team'}
-                                </button>
-                            )}
-                        </div>
+                        )}
 
                         {/* Close / Reopen (leader only) */}
                         {user?.id === team.leader?._id && (
@@ -147,12 +142,6 @@ export default function TeamDetail() {
                 </div>
             </div>
 
-            {/* Team Chat */}
-            {showChat && (
-                <div style={{ marginTop: '2rem' }}>
-                    <TeamChat teamId={team._id} />
-                </div>
-            )}
         </div>
     );
 }

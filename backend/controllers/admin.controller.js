@@ -162,7 +162,7 @@ const deleteOrganizer = async (req, res) => {
 const getPasswordResets = async (req, res) => {
     try {
         const requests = await PasswordResetRequest.find()
-            .populate('organizer', 'name loginEmail contactEmail')
+            .populate('organizer', 'name category loginEmail contactEmail')
             .sort({ requestedAt: -1 });
 
         res.json(requests);
@@ -193,9 +193,12 @@ const approvePasswordReset = async (req, res) => {
         organizer.password = newPassword; // pre-save hook will hash
         await organizer.save();
 
+        const { comment } = req.body;
+
         // Update request
         resetRequest.status = 'approved';
         resetRequest.newPassword = newPassword;
+        resetRequest.adminComment = comment || '';
         resetRequest.resolvedAt = new Date();
         await resetRequest.save();
 
@@ -232,7 +235,10 @@ const rejectPasswordReset = async (req, res) => {
             return res.status(400).json({ message: 'Request has already been processed' });
         }
 
+        const { comment } = req.body;
+
         resetRequest.status = 'rejected';
+        resetRequest.adminComment = comment || '';
         resetRequest.resolvedAt = new Date();
         await resetRequest.save();
 
